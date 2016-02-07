@@ -103,7 +103,7 @@ class MySQL {
 	
 	
 	// Performs a 'mysql_real_escape_string' on the entire array/string
-	private function SecureData($data, $types){
+	private function SecureData($data, $types=array()){
 		if(is_array($data)){
             $i = 0;
 			foreach($data as $key=>$val){
@@ -130,16 +130,19 @@ class MySQL {
                 //$data = $data;
                 break;
             case 'str':
-                $data = settype( $data, 'string');
+            case 'string':
+                settype( $data, 'string');
                 break;
             case 'int':
-                $data = settype( $data, 'integer');
+            case 'integer':
+                settype( $data, 'integer');
                 break;
             case 'float':
-                $data = settype( $data, 'float');
+                settype( $data, 'float');
                 break;
             case 'bool':
-                $data = settype( $data, 'boolean');
+            case 'boolean':
+                settype( $data, 'boolean');
                 break;
             // Y-m-d H:i:s
             // 2014-01-01 12:30:30
@@ -150,7 +153,7 @@ class MySQL {
                 $data = $matches[1];
                 break;
             case 'ts2dt':
-                $data = settype( $data, 'integer');
+                settype( $data, 'integer');
                 $data = date('Y-m-d H:i:s', $data);
                 break;
 
@@ -163,7 +166,6 @@ class MySQL {
                 $data = filter_var($data, FILTER_VALIDATE_EMAIL);
                 break;
             default:
-                $data = '';
                 break;
         }
         return $data;
@@ -181,11 +183,10 @@ class MySQL {
         if($this->result = mysql_query($query, $this->databaseLink)){
             if (gettype($this->result) === 'resource') {
                 $this->records  = @mysql_num_rows($this->result);
-                $this->affected = @mysql_affected_rows($this->databaseLink);
             } else {
                $this->records  = 0;
-               $this->affected = 0;
             }
+            $this->affected = @mysql_affected_rows($this->databaseLink);
 
             if($this->records > 0){
                 $this->arrayResults();
@@ -213,7 +214,7 @@ class MySQL {
 	}
 	
     // Adds a record to the database based on the array key names
-    public function insert($table, $vars, $exclude = '', $datatypes){
+    public function insert($table, $vars, $exclude = '', $datatypes=array()){
 
         // Catch Exclusions
         if($exclude == ''){
@@ -239,7 +240,7 @@ class MySQL {
     }
 
     // Deletes a record from the database
-    public function delete($table, $where='', $limit='', $like=false, $wheretypes){
+    public function delete($table, $where='', $limit='', $like=false, $wheretypes=array()){
         $query = "DELETE FROM `{$table}` WHERE ";
         if(is_array($where) && $where != ''){
             // Prepare Variables
@@ -265,7 +266,7 @@ class MySQL {
 
 
     // Gets a single row from $from where $where is true
-    public function select($from, $where='', $orderBy='', $limit='', $like=false, $operand='AND',$cols='*', $wheretypes){
+    public function select($from, $where='', $orderBy='', $limit='', $like=false, $operand='AND',$cols='*', $wheretypes=array()){
         // Catch Exceptions
         if(trim($from) == ''){
             return false;
@@ -299,12 +300,14 @@ class MySQL {
             $query .= ' LIMIT ' . $limit;
         }
 
-        return $this->executeSQL($query);
+        $result = $this->executeSQL($query);
+        if(is_array($result)) return $result;
+        return array();
 
     }
 
     // Updates a record in the database based on WHERE
-    public function update($table, $set, $where, $exclude = '', $datatypes, $wheretypes){
+    public function update($table, $set, $where, $exclude = '', $datatypes=array(), $wheretypes=array()){
         // Catch Exceptions
         if(trim($table) == '' || !is_array($set) || !is_array($where)){
             return false;
